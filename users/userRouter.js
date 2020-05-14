@@ -21,23 +21,30 @@ router.get("/", (req, res) => {
     .catch(err => {
       res
         .status(500)
-        .json({ errorMessage: "Unable to retrieve users data from database." });
+        .json({ message: "Unable to retrieve users data from database." });
     });
 });
 
-router.get("/:id", (req, res) => {
+router.get("/:id", validateUserId, (req, res) => {
+  // do your magic!
+  res.status(200).json(req.user);
+});
+
+router.get("/:id/posts", validateUserId, (req, res) => {
+  // do your magic!
+  userDb
+    .getUserPosts(req.user.id)
+    .then(userPosts => {
+      res.status(200).json(userPosts);
+    })
+    .catch(err => console.log(err));
+});
+
+router.delete("/:id", validateUserId, (req, res) => {
   // do your magic!
 });
 
-router.get("/:id/posts", (req, res) => {
-  // do your magic!
-});
-
-router.delete("/:id", (req, res) => {
-  // do your magic!
-});
-
-router.put("/:id", (req, res) => {
+router.put("/:id", validateUserId, (req, res) => {
   // do your magic!
 });
 
@@ -45,6 +52,22 @@ router.put("/:id", (req, res) => {
 
 function validateUserId(req, res, next) {
   // do your magic!
+  const { id } = req.params;
+
+  userDb
+    .getById(id)
+    .then(user => {
+      if (user) {
+        req.user = user;
+        next();
+      } else {
+        res.status(400).json({ message: "invalid user id" });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ message: "Database error", err });
+    });
 }
 
 function validateUser(req, res, next) {

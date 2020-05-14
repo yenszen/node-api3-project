@@ -19,4 +19,12 @@ function logger(req, res, next) {
   next();
 }
 
+// function errorHandler(error, req, res, next) {
+//   console.log("error", error);
+//   const code = error.status || error.statusCode || 400;
+//   res.status(code).json(error);
+// }
+
+// server.use(errorHandler);
+
 module.exports = server;
