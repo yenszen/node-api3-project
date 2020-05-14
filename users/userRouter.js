@@ -85,21 +85,33 @@ function validateUserId(req, res, next) {
 
 function validateUser(req, res, next) {
   // do your magic!
-  userDb
-    .insert(req.body)
-    .then(resource => {
-      if (!req.body) {
-        res.status(400).json({ message: "missing user data" });
-      } else if (!resource.name) {
-        res.status(400).json({ message: "missing required name field" });
-      } else {
-        req.user = resource;
-        next();
+  const isEmpty = obj => {
+    for (let prop in obj) {
+      if (obj.hasOwnProperty(prop)) {
+        return false;
       }
-    })
-    .catch(err => {
-      res.status(500).json({ message: "Database error", err });
-    });
+    }
+
+    return JSON.stringify(obj) === JSON.stringify({});
+  };
+
+  isEmpty(req.body)
+    ? res.status(400).json({ message: "missing user data" })
+    : userDb
+        .insert(req.body)
+        .then(resource => {
+          if (!resource.name) {
+            // this testing condition does not work, why??
+            res.status(400).json({ message: "missing required name field" });
+          } else {
+            req.user = resource;
+            next();
+          }
+        })
+        .catch(err => {
+          console.log(req.body);
+          res.status(500).json({ message: "Database error", err });
+        });
 }
 
 function validatePost(req, res, next) {
