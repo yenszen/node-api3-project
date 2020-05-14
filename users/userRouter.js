@@ -3,8 +3,9 @@ const userDb = require("./userDb");
 
 const router = express.Router();
 
-router.post("/", (req, res) => {
+router.post("/", validateUser, (req, res) => {
   // do your magic!
+  res.status(201).json(req.user);
 });
 
 router.post("/:id/posts", (req, res) => {
@@ -42,10 +43,22 @@ router.get("/:id/posts", validateUserId, (req, res) => {
 
 router.delete("/:id", validateUserId, (req, res) => {
   // do your magic!
+  userDb
+    .remove(req.user.id)
+    .then(record => {
+      res.status(200).json({ message: "The user has been removed" });
+    })
+    .catch(err => console.log(err));
 });
 
 router.put("/:id", validateUserId, (req, res) => {
   // do your magic!
+  userDb
+    .update(req.user.id, req.body)
+    .then(record => {
+      res.status(200).json(record);
+    })
+    .catch(err => console.log(err));
 });
 
 //custom middleware
@@ -72,6 +85,21 @@ function validateUserId(req, res, next) {
 
 function validateUser(req, res, next) {
   // do your magic!
+  userDb
+    .insert(req.body)
+    .then(resource => {
+      if (!req.body) {
+        res.status(400).json({ message: "missing user data" });
+      } else if (!resource.name) {
+        res.status(400).json({ message: "missing required name field" });
+      } else {
+        req.user = resource;
+        next();
+      }
+    })
+    .catch(err => {
+      res.status(500).json({ message: "Database error", err });
+    });
 }
 
 function validatePost(req, res, next) {
