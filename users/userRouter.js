@@ -1,5 +1,6 @@
 const express = require("express");
 const userDb = require("./userDb");
+const postDb = require("../posts/postDb");
 
 const router = express.Router();
 
@@ -8,8 +9,9 @@ router.post("/", validateUser, (req, res) => {
   res.status(201).json(req.user);
 });
 
-router.post("/:id/posts", (req, res) => {
+router.post("/:id/posts", validateUserId, validatePost, (req, res) => {
   // do your magic!
+  res.status(201).json(req.body);
 });
 
 router.get("/", (req, res) => {
@@ -83,18 +85,18 @@ function validateUserId(req, res, next) {
     });
 }
 
+function isEmpty(obj) {
+  for (let prop in obj) {
+    if (obj.hasOwnProperty(prop)) {
+      return false;
+    }
+  }
+
+  return JSON.stringify(obj) === JSON.stringify({});
+}
+
 function validateUser(req, res, next) {
   // do your magic!
-  const isEmpty = obj => {
-    for (let prop in obj) {
-      if (obj.hasOwnProperty(prop)) {
-        return false;
-      }
-    }
-
-    return JSON.stringify(obj) === JSON.stringify({});
-  };
-
   isEmpty(req.body)
     ? res.status(400).json({ message: "missing user data" })
     : userDb
@@ -116,6 +118,26 @@ function validateUser(req, res, next) {
 
 function validatePost(req, res, next) {
   // do your magic!
+  if (isEmpty(req.body)) {
+    res.status(400).json({ message: "missing post data" });
+  } else {
+    req.body.user_id = req.user.id;
+
+    postDb
+      .insert(req.body)
+      .then(resource => {
+        console.log(resource);
+        if (!resource.text) {
+          res.status(400).json({ message: "missing required text field" });
+        } else {
+          req.body = resource;
+          next();
+        }
+      })
+      .catch(err => {
+        res.status(500).json({ message: "Database error", err });
+      });
+  }
 }
 
 module.exports = router;
