@@ -14,18 +14,28 @@ router.post("/:id/posts", validateUserId, validatePost, (req, res) => {
   res.status(201).json(req.body);
 });
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   // do your magic!
-  userDb
-    .get()
-    .then(users => {
-      res.status(200).json(users);
-    })
-    .catch(err => {
-      res
-        .status(500)
-        .json({ message: "Unable to retrieve users data from database." });
-    });
+  try {
+    const messageOfTheDay = process.env.MOTD || "Hello World!";
+    const users = await userDb.get();
+    res.status(200).json({ motd: messageOfTheDay, users });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Unable to retrieve users data from database" });
+  }
+
+  // userDb
+  //   .get()
+  //   .then(users => {
+  //     res.status(200).json(users);
+  //   })
+  //   .catch(err => {
+  //     res
+  //       .status(500)
+  //       .json({ message: "Unable to retrieve users data from database." });
+  //   });
 });
 
 router.get("/:id", validateUserId, (req, res) => {
